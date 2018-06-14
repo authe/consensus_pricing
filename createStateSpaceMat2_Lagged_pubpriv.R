@@ -5,7 +5,7 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.e, sig.n, tol=1e-15){
   # transition equation: theta_t = M_k theta_{t-1} + N_k w_t with w_t ~ N(0, I_2)
   # observation equation: y_t = D_{k,1} theta_t + D_{k,2} theta_{t-1} + R_w w_t + R_n eta_{j,t} with eta_{j,t} = N(0,1)
   # where theta_t = (theta_t^(0), theta_t^(1), ..., theta_t^(ord)) and ord >= 1
-  # y_(1,t) = theta_t + sig.n eta_{j,t} and y_(2,t) = theta_{t-1}^(1) + sig.e w_{2,t}
+  # y_(1,t) = theta_t + sig.n eta_{j,t} + sig.v v_t and y_(2,t) = theta_{t-1}^(1)
   # P_k = lim_t -> infty Var(theta_t) : stationary state covariance matrix
   # KK_k : stationary Kalman gain
   

@@ -34,11 +34,15 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
     sp <- SP.model(rho = rho, theta.bar = theta.bar, sig.u = sig.u, sig.v = sig.v, sig.n = sig.n, ord = ord, tol = tol , S = S)
     
     a0 <- c(rep(0, ord+1), rep(0,S*ord), 0)
-    P0 <- diag(S) %x% sp$SIG
-    P0 <- cbind( matrix(0, ncol=(ord+1), nrow=(S*ord)), P0)
-    P0 <- rbind( cbind(sp$PP, matrix(0, nrow=(ord+1), ncol=(S*ord))), P0)
-    P0 <- cbind(P0, rep(0,(ord+1) + (S*ord)))
-    P0 <- rbind(P0, c(rep(0,(ord+1) + (S*ord)), sp$PP[2,2]))
+    
+    # calculate state covariance matrix
+    P0 <- var(yt[1,]) * diag(((1+ord) + S*ord + 1))
+    
+    # P0 <- diag(S) %x% sp$SIG
+    # P0 <- cbind( matrix(0, ncol=(ord+1), nrow=(S*ord)), P0)
+    # P0 <- rbind( cbind(sp$PP, matrix(0, nrow=(ord+1), ncol=(S*ord))), P0)
+    # P0 <- cbind(P0, rep(0,(ord+1) + (S*ord)))
+    # P0 <- rbind(P0, c(rep(0,(ord+1) + (S*ord)), sp$PP[2,2]))
     
     ans <- fkf(a0 = a0, P0 = P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
                Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
@@ -50,8 +54,8 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
   
   
   # objective function evaluated at data yt 
-  f <- function(par){
-    val <- objective(paras=par, yt=yt, ord = ord, l = l, h = h, tol = 1e-15)
+  f <- function(x){
+    val <- objective(paras=x, yt=yt, ord = ord, l = l, h = h, tol = 1e-15)
     return(val)
   }
   
@@ -65,8 +69,8 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
   paras0.trans <- c(trans.rho.0, theta.bar.0, log.sig.u.0, log.sig.v.0, log.sig.n.0)
 
   # optimisation using opt.algo
-  fit <- optimr(par = paras0.trans, fn = f, method=opt.algo, hessian = TRUE, control = list(maxit = 10000))
-  #fit <- optim(par = paras0.trans, fn = f, method=opt.algo, hessian = TRUE, control = list(maxit = 10000))
+  #fit <- optimr(par = paras0.trans, fn = f, method=opt.algo, hessian = TRUE, control = list(maxit = 10000))
+  fit <- optim(par = paras0.trans, fn = f, method=opt.algo, hessian = TRUE, control = list(maxit = 10000))
   
   est <- fit$par
   estimates <- c(rho=1/(1+exp(-est[1])), theta.bar=est[2], sig.u=(h + l*exp(-est[3]))/(1 + exp(-est[3])), sig.v=(h + l*exp(-est[4]))/(1 + exp(-est[4])), sig.n=(h + l*exp(-est[5]))/(1 + exp(-est[5])))

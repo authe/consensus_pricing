@@ -1,3 +1,5 @@
+# estimate model with simulated data
+
 source('EstimateModel2_Lagged_pubpriv.R')
 source('SimulateData2_Lagged_pubpriv.R')
 

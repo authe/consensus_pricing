@@ -1,4 +1,4 @@
-StateSpaceMatLag <- function(ord, rho, sig.u, sig.e, sig.n, tol=1e-15){
+StateSpaceMatLag <- function(ord, rho, sig.u, sig.v, sig.n, tol=1e-15){
 
   # function to create matrices for state-state state space system with beliefs of order ord
   # output: M_k, N_k, PP_k, KK_k 
@@ -17,7 +17,7 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.e, sig.n, tol=1e-15){
   # y_t = D1 theta_t + D2 theta_{t-1} + R (w_t eta_{j,t})'
   # (formulas used for Kalman filter derive from Nimark (2015) "A Low Dimensional Kalman Filter", Economic Letters)
   
-  # initialise consensus price signal at p_t = theta_{t-1}^(0) + sig.e w_{2,t}
+  # initialise consensus price signal at p_t = theta_{t-1}^(0)
   
   # initial conditions for state equation: theta_t^(0) = rho theta_{t-1}^(0) + sig.u w_{1,t} 
   A <- matrix(rho, nrow=1)
@@ -26,7 +26,7 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.e, sig.n, tol=1e-15){
   # initial conditions for observation equation
   D1 <- matrix(c(1,0), nrow=2)   
   D2 <- matrix(c(0,1), nrow=2)
-  R.w <- matrix( c(0,0,0,sig.e), nrow=2)
+  R.w <- matrix( c(0,0,sig.v,0), nrow=2)
   R.n <- matrix( c(sig.n, 0), nrow=2 )
   R <- cbind(R.w, R.n)
   

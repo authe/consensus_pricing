@@ -1,10 +1,10 @@
-SimulateDataLagged <- function(S, TT, rho, theta.bar, sig.u, sig.e, sig.n, ord, seed=1, sig.z=0, tol=1e-15){
+SimulateDataLagged <- function(S, TT, rho, theta.bar, sig.u, sig.v, sig.n, ord, seed=1, sig.z=0, tol=1e-15){
   
   # code to simulate submissions for S submitters and belief order ord
   
   # import function to create state space system
   library(MASS)
-  source("createStateSpaceMat2_Lagged.R")
+  source("createStateSpaceMat2_Lagged_pubpriv.R")
   
   # simulation parameters
   set.seed(seed)     # fix seed
@@ -18,7 +18,7 @@ SimulateDataLagged <- function(S, TT, rho, theta.bar, sig.u, sig.e, sig.n, ord, 
   # ord <- 10       # order of beliefs hierachy theta_t = (theta_t^(0),theta_t^(1),...,theta_t^(ord))
   
   # get matrices for state space system
-  SSMat <- StateSpaceMatLag(ord=ord, rho=rho, sig.u=sig.u, sig.e=sig.e, sig.n=sig.n, tol=tol)
+  SSMat <- StateSpaceMatLag(ord=ord, rho=rho, sig.u=sig.u, sig.v=sig.v, sig.n=sig.n, tol=tol)
   
   #############################  SIMULATION  ##########################################################
   
@@ -41,7 +41,7 @@ SimulateDataLagged <- function(S, TT, rho, theta.bar, sig.u, sig.e, sig.n, ord, 
   ###### simulate time series for individual submissions
   
   # generate consensus price p_t = theta^(1)_(t-1) + eta_t
-  price = c(0,theta[(1:TT),2]) + sig.e * w[,2]
+  price = c(0,theta[(1:TT),2])
   
   # generate beliefs for S submitters
   
@@ -57,7 +57,7 @@ SimulateDataLagged <- function(S, TT, rho, theta.bar, sig.u, sig.e, sig.n, ord, 
     
     for (t in 2:(TT+1)){
       
-      priv.signal <- theta[t,1] + sig.n * rnorm(1)
+      priv.signal <- theta[t,1] + sig.v * w[t,2] + sig.n * rnorm(1)
       signals = matrix( c(priv.signal, price[t]), nrow=2)
       
       aux <- SSMat$M.ind %*% aux + SSMat$KK %*% ( signals - SSMat$D1 %*% SSMat$M.ind %*% aux - SSMat$D2 %*% aux) 

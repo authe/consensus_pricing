@@ -1,8 +1,9 @@
-estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
+estimate.model <- function(paras0, yt, a0, P0, ord, l, h, opt.algo="Nelder-Mead"){
 
   # ML estimation of model given data and initial conditions
   # parameters to estimate: rho (persistence fundamental), sig.u (fundamental shock), sig.e (public noise), sig.n (private noise), sig.z (measurement error)
   # paras0: vector of initial conditions c(rho,theta.bar,sig.u,sig.e,sig.n,sig.z [optional]) to be used in optimization
+  # a0, P0: prior mean and covariance matrix for state vector
   # additional parameters:
   #   l, h : upper and lower bounds for sig.u, sig.e, sig.n, sig.z
   #   ord: order of model
@@ -12,10 +13,8 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
   
   # load libraries and auxiliary functions
   library(tictoc)
-  library(FKF)
   library(optimr)
-  source("createStateSpaceMat2_Lagged_pubpriv.R")
-  source("FKFModel2_Lagged_pubpriv.R")
+  source('LogLike2_Lagged_pubpriv.R')
 
   ####################################### objective function passed to 'optim'  ###############################
 
@@ -23,7 +22,6 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
     # ord: beliefs order used
     # l: lower bound for standard deviation
     # h : upper bound for standard deviations
-    S <- dim(yt)[1] - 1
     
     rho <- 1/(1+exp(-paras[1]))
     theta.bar <- paras[2]
@@ -31,33 +29,20 @@ estimate.model <- function(paras0, yt, ord, l, h, opt.algo="Nelder-Mead"){
     sig.v <- (h + l*exp(-paras[4]))/(1 + exp(-paras[4]))
     sig.n <- (h + l*exp(-paras[5]))/(1 + exp(-paras[5]))
     
-    sp <- SP.model(rho = rho, theta.bar = theta.bar, sig.u = sig.u, sig.v = sig.v, sig.n = sig.n, ord = ord, tol = tol , S = S)
+    par <- c(rho, theta.bar, sig.u, sig.v, sig.n)
     
-    a0 <- c(rep(0, ord+1), rep(0,S*ord), 0)
+    LL.val <- LL.model(paras = par, yt = yt, a0 = a0, P0 = P0, ord = ord, tol = tol)
     
-    # calculate state covariance matrix
-    P0 <- var(yt[1,]) * diag(((1+ord) + S*ord + 1))
-    
-    # P0 <- diag(S) %x% sp$SIG
-    # P0 <- cbind( matrix(0, ncol=(ord+1), nrow=(S*ord)), P0)
-    # P0 <- rbind( cbind(sp$PP, matrix(0, nrow=(ord+1), ncol=(S*ord))), P0)
-    # P0 <- cbind(P0, rep(0,(ord+1) + (S*ord)))
-    # P0 <- rbind(P0, c(rep(0,(ord+1) + (S*ord)), sp$PP[2,2]))
-    
-    ans <- fkf(a0 = a0, P0 = P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
-               Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
-    return(-ans$logLik)
+    return(LL.val)
   }
-
-  ###################################  estimation  ##########################################################
-
-  
   
   # objective function evaluated at data yt 
   f <- function(x){
     val <- objective(paras=x, yt=yt, ord = ord, l = l, h = h, tol = 1e-15)
     return(val)
   }
+
+  ###################################  estimation  ##########################################################
   
   # transform initial conditions for optimisation
   

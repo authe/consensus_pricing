@@ -31,9 +31,9 @@ estimate.model <- function(paras0, yt, a0, P0, ord, l, h, opt.algo="Nelder-Mead"
     
     par <- c(rho, theta.bar, sig.u, sig.v, sig.n)
     
-    LL.val <- LL.model(paras = par, yt = yt, a0 = a0, P0 = P0, ord = ord, tol = tol)
+    LL.out <- LL.model(paras = par, yt = yt, a0 = a0, P0 = P0, ord = ord, tol = tol)
     
-    return(LL.val)
+    return(-LL.out$LL)
   }
   
   # objective function evaluated at data yt 

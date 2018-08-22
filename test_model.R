@@ -4,10 +4,10 @@ source('SimulateData2_Lagged_pubpriv.R')
 
 n.sim <- 10
 
-S <- 40
+S <- 25
 TT <- 500
-ord <- 2
-paras.sim <- c(0.7, -1.4, 0.1, 0.01, 0.03)
+ord <- 3
+paras.sim <- c(0.7, -1.4, 0.1, 0.1, 0.1)
 
 l <- 1e-10
 h <- 1
@@ -39,12 +39,12 @@ for (seed in 1:n.sim){
   aux <- matrix(sig2.theta.0, nrow=(1+ord), ncol=(1+ord))
   aux <- rbind(aux, matrix(0, nrow=(S*ord), ncol=(1+ord)))
   P0 <- cbind(aux, P0)
-  aux <- c(rep(rho.0 * sig2.theta.0, 3), rep(0,ord*S))
+  aux <- c(rep(rho.0 * sig2.theta.0, (1+ord)), rep(0,ord*S))
   P0 <- cbind(P0, aux)
   P0 <- rbind(P0, c(aux,sig2.theta.0))
   
-  est.out <- estimate.model(paras0 = paras.0, yt = yt.sim, a0 = a0, P0 = P0, ord = 2, l = l, h = h)
+  est.out <- estimate.model(paras0 = paras.0, yt = yt.sim, a0 = a0, P0 = P0, ord = ord, l = l, h = h)
   est.sim <- rbind(est.sim, c(est.out$par, est.out$LL, est.out$converge))
+  colnames(est.sim) <- c('rho', 'theta', 'sig.u', 'sig.v', 'sig.n', 'LL', 'con')
+  print(est.sim)
 }
-
-colnames(est.sim) <- c('rho', 'theta', 'sig.u', 'sig.v', 'sig.n', 'LL', 'con')

@@ -7,6 +7,7 @@ LL.model <- function(paras, yt, a0, P0, ord, tol=1e-15){
   source("FKFModel2_Lagged_pubpriv.R")
   
   S <- dim(yt)[1] - 1
+  TT <- dim(yt)[2]
   
   rho <- paras[1]
   theta.bar <- paras[2]
@@ -18,6 +19,9 @@ LL.model <- function(paras, yt, a0, P0, ord, tol=1e-15){
   
   ans <- fkf(a0 = a0, P0 = P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
              Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
-  return(-ans$logLik)
+  
+  out.data <- list(LL=ans$logLik, Ptt=ans$Ptt[,,TT])
+  
+  return(out.data)
    
 }

@@ -17,7 +17,7 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.v, sig.n, tol=1e-15){
   # y_t = D1 theta_t + D2 theta_{t-1} + R (w_t eta_{j,t})'
   # (formulas used for Kalman filter derive from Nimark (2015) "A Low Dimensional Kalman Filter", Economic Letters)
   
-  # initialise consensus price signal at p_t = theta_{t-1}^(0)
+  # initialise consensus price signal at p_t = theta_{t-1}^(0) + sig.v w_{2,t}
   
   # initial conditions for state equation: theta_t^(0) = rho theta_{t-1}^(0) + sig.u w_{1,t} 
   A <- matrix(rho, nrow=1)
@@ -26,7 +26,7 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.v, sig.n, tol=1e-15){
   # initial conditions for observation equation
   D1 <- matrix(c(1,0), nrow=2)   
   D2 <- matrix(c(0,1), nrow=2)
-  R.w <- matrix( c(0,0,sig.v,0), nrow=2)
+  R.w <- matrix( c(0,0,sig.v,sig.v), nrow=2)
   R.n <- matrix( c(sig.n, 0), nrow=2 )
   R <- cbind(R.w, R.n)
   
@@ -66,6 +66,8 @@ StateSpaceMatLag <- function(ord, rho, sig.u, sig.v, sig.n, tol=1e-15){
     KK.old <- KK
     
     # update A, C, and D
+    
+    R.w <- matrix( c(0,0,sig.v,0), nrow=2)
     
     MA <- rbind( c(rho, rep(0,k)), matrix(0, nrow=k, ncol=k+1) )
     MB <- rbind( rep(0,k), KK %*% (D1 %*% A + D2) )

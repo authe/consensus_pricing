@@ -4,10 +4,10 @@ source('SimulateData2_Lagged_pubpriv.R')
 
 set.seed(1)
 
-n.test <- 2
-n.sim <- 10
+n.test <- 10
+n.sim <- 20
 
-S <- 5
+S <- 30
 TT <- 500
 ord <- 2
 l <- 1e-10
@@ -56,9 +56,12 @@ for (n in 1:n.test){
     P0 <- rbind(P0, c(aux,sig2.theta.0))
     
     est.out <- estimate.model(paras0 = paras.0, yt = yt.sim, a0 = a0, P0 = P0, ord = ord, l = l, h = h)
-    est.sim <- rbind(est.sim, c(est.out$par, est.out$LL, est.out$converge))
+    est.sim <- rbind(est.sim, c(est.out$par, -est.out$LL, est.out$converge))
     colnames(est.sim) <- c('rho', 'theta', 'sig.u', 'sig.v', 'sig.n', 'LL', 'con')
     print(est.sim)
   }
+  
+  aux <- LL.model(paras = paras.sim[n,], yt = yt.sim, a0 = a0, P0 = P0, ord = ord)
+  est.sim <- rbind(c(paras.sim[n,], aux$LL, 0), est.sim)
   est.list[[n]] <- est.sim 
 }

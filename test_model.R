@@ -5,37 +5,38 @@ source('SimulateData2_Lagged_pubpriv.R')
 set.seed(1)
 
 n.test <- 10
-n.sim <- 20
+n.sim <- 10
 
-S <- 30
+S <- 20
 TT <- 500
 ord <- 2
 l <- 1e-10
 h <- 1
 
-#paras.sim <- c(0.95, -1.4, 0.1, 0.15, 0.1)
-paras.sim <- matrix(rnorm(n.test*5), ncol=5, nrow=n.test)
-paras.sim[,1] <- 1/(1+exp(-paras.sim[,1]))
-paras.sim[,3] <- (h + l*exp(-paras.sim[,3]))/(1 + exp(-paras.sim[,3]))/10
-paras.sim[,4] <- (h + l*exp(-paras.sim[,4]))/(1 + exp(-paras.sim[,4]))/10
-paras.sim[,5] <- (h + l*exp(-paras.sim[,5]))/(1 + exp(-paras.sim[,5]))/10
+#paras.sim <- matrix(rnorm(n.test*5), ncol=5, nrow=n.test)
+paras.sim[,1] <- 1/(1+exp(-rnorm(n.test)))  #1/(1+exp(-paras.sim[,1]))
+paras.sim[,2] <- rnorm(n.test)
+paras.sim[,3] <- rchisq(n.test,0.5) #(h + l*exp(-paras.sim[,3]))/(1 + exp(-paras.sim[,3]))/10
+paras.sim[,4] <- rchisq(n.test,0.5) #(h + l*exp(-paras.sim[,4]))/(1 + exp(-paras.sim[,4]))/10
+paras.sim[,5] <- rchisq(n.test,0.5) #(h + l*exp(-paras.sim[,5]))/(1 + exp(-paras.sim[,5]))/10
 
 est.list <- list()
 length(est.list) <- n.test
 
 for (n in 1:n.test){
-  est.sim <- c()
+  sprintf('%s %i', 'parameter configuration', n)
+  est.sim <- c(paras.sim[n,], 0, 0, 0)
   
   for (seed in 1:n.sim){
-    print(seed)
+    sprintf('%s %i', 'simulation', seed)
     yt.sim <- SimulateDataLagged(S = S, TT = TT, rho = paras.sim[n,1], theta.bar = paras.sim[n,2], sig.u = paras.sim[n,3], sig.v = paras.sim[n,4], sig.n = paras.sim[n,5], ord = ord, seed = seed)
     
     # initial value for parameters
     consIV <- yt.sim[1,]
-    est.AR1 <- ar(consIV, order.max=1)
-    rho.0 <- est.AR1$ar
+    est.AR1 <- arima(consIV, c(1,0,0))
+    rho.0 <- min(abs(est.AR1$coef[1]),0.99)
     theta.0 <- mean(consIV)
-    sig.u.0 <- sqrt(est.AR1$var.pred)
+    sig.u.0 <- sqrt(est.AR1$sigma2)
     sig.n.0 <- mean(apply(yt.sim[2:(S+1),], 2, sd, na.rm=TRUE))
     sig.v.0 <- sig.n.0
     
@@ -56,12 +57,12 @@ for (n in 1:n.test){
     P0 <- rbind(P0, c(aux,sig2.theta.0))
     
     est.out <- estimate.model(paras0 = paras.0, yt = yt.sim, a0 = a0, P0 = P0, ord = ord, l = l, h = h)
-    est.sim <- rbind(est.sim, c(est.out$par, -est.out$LL, est.out$converge))
-    colnames(est.sim) <- c('rho', 'theta', 'sig.u', 'sig.v', 'sig.n', 'LL', 'con')
+    LL.true <- LL.model(paras = paras.sim[n,], yt = yt.sim, a0 = a0, P0 = P0, ord = ord)
+    est.sim <- rbind(est.sim, c(est.out$par, -est.out$LL, LL.true$LL, est.out$converge))
+    colnames(est.sim) <- c('rho', 'theta', 'sig.u', 'sig.v', 'sig.n', 'LL', 'LL.true', 'con')
     print(est.sim)
   }
   
-  aux <- LL.model(paras = paras.sim[n,], yt = yt.sim, a0 = a0, P0 = P0, ord = ord)
-  est.sim <- rbind(c(paras.sim[n,], aux$LL, 0), est.sim)
   est.list[[n]] <- est.sim 
+
 }
